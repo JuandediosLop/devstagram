@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 
 class RegisterController extends Controller
@@ -14,6 +16,11 @@ class RegisterController extends Controller
 
     public function store(Request $request)
     {
+        //Modificar el Request
+        $request->request->add([
+            'username' => Str::slug($request->username)
+        ]);
+
         //validaciones
         $this->validate($request, [
             'name' => 'required|min:3|max:20',
@@ -22,6 +29,17 @@ class RegisterController extends Controller
             'password' => 'required|confirmed|min:8|max:30'
         ]);
 
-        dd('Creando usuario');
+        User::create([
+            'name' => $request->name,
+            'username' => $request->username,
+            'email' => strtolower($request->email),
+            'password' => bcrypt($request->password)
+        ]);
+
+        //otra forma de autenticar
+        auth()->attempt($request->only('email', 'password'));
+
+        //redireccionar
+        return redirect()->route('posts.index');
     }
 }
